@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "knex": "^2.1.0",
+    "morgan": "^1.10.0"
+  }
+}
