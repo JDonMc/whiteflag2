@@ -15,14 +15,6 @@ class CircularNeuralNetwork:
         return math.sqrt(100+(self._sigmoid(x) * (1 - self._sigmoid(x)))**2)-math.sqrt(100)
         #return self._sigmoid(x) * (1 - self._sigmoid(x))
 
-    def _sigmoid2(self, x):
-        return 1 / (1 + np.exp(-x+2))
-
-    def _sigmoid2_deriv(self, x):
-        return math.sqrt(100+(self._sigmoid2(x) * (1 - self._sigmoid2(x)))**2)-math.sqrt(100)
-        #return self._sigmoid(x) * (1 - self._sigmoid(x))
-
-
     def predict(self, input_vector):
         layer_1 = np.dot(input_vector, self.weights) + self.bias
         layer_2 = self._sigmoid(layer_1)
@@ -87,7 +79,7 @@ class CircularNeuralNetwork:
         return cumulative_errors
 
 
-class CircularNeuralNetwork2:
+class MultiplicativeNeuralNetwork:
     def __init__(self, learning_rate):
         self.weights = np.array([np.random.randn(), np.random.randn()])
         self.bias = np.random.randn()
@@ -97,14 +89,7 @@ class CircularNeuralNetwork2:
         return 1 / (1 + np.exp(-x))
 
     def _sigmoid_deriv(self, x):
-        return math.sqrt(100+(self._sigmoid(x) * (1 - self._sigmoid(x)))**2)-math.sqrt(100)
-        #return self._sigmoid(x) * (1 - self._sigmoid(x))
-
-    def _sigmoid2(self, x):
-        return 1 / (1 + np.exp(-x+2))
-
-    def _sigmoid2_deriv(self, x):
-        return math.sqrt(100+(self._sigmoid2(x) * (1 - self._sigmoid2(x)))**2)-math.sqrt(100)
+        return np.exp((self._sigmoid(x) * (1 - self._sigmoid(x)))/(1 / (1 + np.exp(-x))))
         #return self._sigmoid(x) * (1 - self._sigmoid(x))
 
 
@@ -271,3 +256,12 @@ plt.plot(training_error)
 plt.xlabel("Circular Iterations")
 plt.ylabel("Error for all training instances")
 plt.savefig("cumulative_error.png")
+
+neural_network = MultiplicativeNeuralNetwork(learning_rate)
+
+training_error = neural_network.train(input_vectors, targets, 100000)
+
+plt.plot(training_error)
+plt.xlabel("Circular Iterations")
+plt.ylabel("Error for all training instances")
+plt.savefig("multiplicative_cumulative_error.png")

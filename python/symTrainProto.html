@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style id = "gStyle">
+p.ex1 {
+  font-size: 200%;
+}
+
+</style>
+</head>
+<body onkeypress="keyPressed()">
+<bold>
+<center>
+<p class="ex1" >
+<span style="color: rgb(0, 0, 0);">
+Instructions:
+Prototype created by ForkingG
+1. press [ to cycle between modes
+2. press ] to cycle between options
+3. press p to pause
+4. use , . to control the fake color option. dot means color matches
+
+5. press \ to cycle block frequency
+6. press + = to control speed
+7. press any letter key for the block guess.
+8. press ; to cycle font size
+press enter to start
+</span> 
+<input id="uploader" type="file"> </input>
+</p>
+</center>
+</bold>
+
+</body>
+    
+<script>
+/*
+
+1. Single letter reading.
+   : With any reading go through each letter and encode the right color. Cycle at a specific rate
+   - add option for block only replacements along with progression. Also could use a frequency for block rate like 30% or 70%
+   - add option for beeps depending on if a colored letter is displayed
+   - another mode is to use the arrow keys to progess to the next letter but only if it matches
+   - add gaps maybe
+
+2. Single word reading
+   : same as (1) but with only one letter at a time 
+
+3. Full reading
+   : Same as (1) but with the whole reading displayed
+4. N back
+   : Every 2 seconds display a random colored square or letter for 1 second. If the color or the letter associated with the color is displayed and it matches n back then the user must press the space bar.
+
+5. 
+Math mode. Use the colored numbers to perform math tasks
+
+
+
+
+
+*/
+    
+var mode = 0;
+var option = 0;
+var blockFrequency = 0.5;
+var doesMatch = false;   
+
+  
+var colorCode = 
+`
+A|color: rgb(255, 0, 0);
+B|color: rgb(0, 0, 255);
+C|color: rgb(237, 125, 5);
+D|color: rgb(125, 61, 5);
+E|color: rgb(36, 255, 0);
+F|color: rgb(97, 115, 94);
+G|color: rgb(19, 178, 0);
+H|color: rgb(164, 157, 0);
+I|color: rgb(176, 111, 217);
+J|color: rgb(53, 142, 252);
+K|color: rgb(184, 232, 139);
+L|color: rgb(117, 2, 189);
+M|color: rgb(255, 97, 77);
+N|color: rgb(168, 255, 28);
+O|color: rgb(255, 162, 0);
+P|color: rgb(163, 3, 110);
+Q|color: rgb(131, 108, 145);
+R|color: rgb(181, 18, 0);
+S|color: rgb(75, 0, 130);
+T|color: rgb(77, 255, 169);
+U|color: rgb(242, 242, 131);
+V|color: rgb(221, 0, 255);
+W|color: rgb(235, 145, 157);
+X|color: rgb(182, 164, 179);
+Y|color: rgb(255, 255, 0);
+Z|color: rgb(131, 131, 131);
+1|color: rgb(0, 54, 255);
+2|color: rgb(255, 0, 0);
+3|color: rgb(19, 203, 4);
+4|color: rgb(135, 9, 182);
+5|color: rgb(255, 162, 0);
+6|color: rgb(0, 181, 181);
+7|color: rgb(117, 1, 125);
+8|color: rgb(30, 1, 97);
+9|color: rgb(228, 255, 0);
+0|color: rgb(0, 0, 0);
+`
+    
+    
+function beep() {
+    var snd = new Audio("data:audio/wav;base64,//uQRAAAAWMSLwUIYAAsYkXgoQwAEaYLWfkWgAI0wWs/ItAAAGDgYtAgAyN+QWaAAihwMWm4G8QQRDiMcCBcH3Cc+CDv/7xA4Tvh9Rz/y8QADBwMWgQAZG/ILNAARQ4GLTcDeIIIhxGOBAuD7hOfBB3/94gcJ3w+o5/5eIAIAAAVwWgQAVQ2ORaIQwEMAJiDg95G4nQL7mQVWI6GwRcfsZAcsKkJvxgxEjzFUgfHoSQ9Qq7KNwqHwuB13MA4a1q/DmBrHgPcmjiGoh//EwC5nGPEmS4RcfkVKOhJf+WOgoxJclFz3kgn//dBA+ya1GhurNn8zb//9NNutNuhz31f////9vt///z+IdAEAAAK4LQIAKobHItEIYCGAExBwe8jcToF9zIKrEdDYIuP2MgOWFSE34wYiR5iqQPj0JIeoVdlG4VD4XA67mAcNa1fhzA1jwHuTRxDUQ//iYBczjHiTJcIuPyKlHQkv/LHQUYkuSi57yQT//uggfZNajQ3Vmz+Zt//+mm3Wm3Q576v////+32///5/EOgAAADVghQAAAAA//uQZAUAB1WI0PZugAAAAAoQwAAAEk3nRd2qAAAAACiDgAAAAAAABCqEEQRLCgwpBGMlJkIz8jKhGvj4k6jzRnqasNKIeoh5gI7BJaC1A1AoNBjJgbyApVS4IDlZgDU5WUAxEKDNmmALHzZp0Fkz1FMTmGFl1FMEyodIavcCAUHDWrKAIA4aa2oCgILEBupZgHvAhEBcZ6joQBxS76AgccrFlczBvKLC0QI2cBoCFvfTDAo7eoOQInqDPBtvrDEZBNYN5xwNwxQRfw8ZQ5wQVLvO8OYU+mHvFLlDh05Mdg7BT6YrRPpCBznMB2r//xKJjyyOh+cImr2/4doscwD6neZjuZR4AgAABYAAAABy1xcdQtxYBYYZdifkUDgzzXaXn98Z0oi9ILU5mBjFANmRwlVJ3/6jYDAmxaiDG3/6xjQQCCKkRb/6kg/wW+kSJ5//rLobkLSiKmqP/0ikJuDaSaSf/6JiLYLEYnW/+kXg1WRVJL/9EmQ1YZIsv/6Qzwy5qk7/+tEU0nkls3/zIUMPKNX/6yZLf+kFgAfgGyLFAUwY//uQZAUABcd5UiNPVXAAAApAAAAAE0VZQKw9ISAAACgAAAAAVQIygIElVrFkBS+Jhi+EAuu+lKAkYUEIsmEAEoMeDmCETMvfSHTGkF5RWH7kz/ESHWPAq/kcCRhqBtMdokPdM7vil7RG98A2sc7zO6ZvTdM7pmOUAZTnJW+NXxqmd41dqJ6mLTXxrPpnV8avaIf5SvL7pndPvPpndJR9Kuu8fePvuiuhorgWjp7Mf/PRjxcFCPDkW31srioCExivv9lcwKEaHsf/7ow2Fl1T/9RkXgEhYElAoCLFtMArxwivDJJ+bR1HTKJdlEoTELCIqgEwVGSQ+hIm0NbK8WXcTEI0UPoa2NbG4y2K00JEWbZavJXkYaqo9CRHS55FcZTjKEk3NKoCYUnSQ0rWxrZbFKbKIhOKPZe1cJKzZSaQrIyULHDZmV5K4xySsDRKWOruanGtjLJXFEmwaIbDLX0hIPBUQPVFVkQkDoUNfSoDgQGKPekoxeGzA4DUvnn4bxzcZrtJyipKfPNy5w+9lnXwgqsiyHNeSVpemw4bWb9psYeq//uQZBoABQt4yMVxYAIAAAkQoAAAHvYpL5m6AAgAACXDAAAAD59jblTirQe9upFsmZbpMudy7Lz1X1DYsxOOSWpfPqNX2WqktK0DMvuGwlbNj44TleLPQ+Gsfb+GOWOKJoIrWb3cIMeeON6lz2umTqMXV8Mj30yWPpjoSa9ujK8SyeJP5y5mOW1D6hvLepeveEAEDo0mgCRClOEgANv3B9a6fikgUSu/DmAMATrGx7nng5p5iimPNZsfQLYB2sDLIkzRKZOHGAaUyDcpFBSLG9MCQALgAIgQs2YunOszLSAyQYPVC2YdGGeHD2dTdJk1pAHGAWDjnkcLKFymS3RQZTInzySoBwMG0QueC3gMsCEYxUqlrcxK6k1LQQcsmyYeQPdC2YfuGPASCBkcVMQQqpVJshui1tkXQJQV0OXGAZMXSOEEBRirXbVRQW7ugq7IM7rPWSZyDlM3IuNEkxzCOJ0ny2ThNkyRai1b6ev//3dzNGzNb//4uAvHT5sURcZCFcuKLhOFs8mLAAEAt4UWAAIABAAAAAB4qbHo0tIjVkUU//uQZAwABfSFz3ZqQAAAAAngwAAAE1HjMp2qAAAAACZDgAAAD5UkTE1UgZEUExqYynN1qZvqIOREEFmBcJQkwdxiFtw0qEOkGYfRDifBui9MQg4QAHAqWtAWHoCxu1Yf4VfWLPIM2mHDFsbQEVGwyqQoQcwnfHeIkNt9YnkiaS1oizycqJrx4KOQjahZxWbcZgztj2c49nKmkId44S71j0c8eV9yDK6uPRzx5X18eDvjvQ6yKo9ZSS6l//8elePK/Lf//IInrOF/FvDoADYAGBMGb7FtErm5MXMlmPAJQVgWta7Zx2go+8xJ0UiCb8LHHdftWyLJE0QIAIsI+UbXu67dZMjmgDGCGl1H+vpF4NSDckSIkk7Vd+sxEhBQMRU8j/12UIRhzSaUdQ+rQU5kGeFxm+hb1oh6pWWmv3uvmReDl0UnvtapVaIzo1jZbf/pD6ElLqSX+rUmOQNpJFa/r+sa4e/pBlAABoAAAAA3CUgShLdGIxsY7AUABPRrgCABdDuQ5GC7DqPQCgbbJUAoRSUj+NIEig0YfyWUho1VBBBA//uQZB4ABZx5zfMakeAAAAmwAAAAF5F3P0w9GtAAACfAAAAAwLhMDmAYWMgVEG1U0FIGCBgXBXAtfMH10000EEEEEECUBYln03TTTdNBDZopopYvrTTdNa325mImNg3TTPV9q3pmY0xoO6bv3r00y+IDGid/9aaaZTGMuj9mpu9Mpio1dXrr5HERTZSmqU36A3CumzN/9Robv/Xx4v9ijkSRSNLQhAWumap82WRSBUqXStV/YcS+XVLnSS+WLDroqArFkMEsAS+eWmrUzrO0oEmE40RlMZ5+ODIkAyKAGUwZ3mVKmcamcJnMW26MRPgUw6j+LkhyHGVGYjSUUKNpuJUQoOIAyDvEyG8S5yfK6dhZc0Tx1KI/gviKL6qvvFs1+bWtaz58uUNnryq6kt5RzOCkPWlVqVX2a/EEBUdU1KrXLf40GoiiFXK///qpoiDXrOgqDR38JB0bw7SoL+ZB9o1RCkQjQ2CBYZKd/+VJxZRRZlqSkKiws0WFxUyCwsKiMy7hUVFhIaCrNQsKkTIsLivwKKigsj8XYlwt/WKi2N4d//uQRCSAAjURNIHpMZBGYiaQPSYyAAABLAAAAAAAACWAAAAApUF/Mg+0aohSIRobBAsMlO//Kk4soosy1JSFRYWaLC4qZBYWFRGZdwqKiwkNBVmoWFSJkWFxX4FFRQWR+LsS4W/rFRb/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////VEFHAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAU291bmRib3kuZGUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMjAwNGh0dHA6Ly93d3cuc291bmRib3kuZGUAAAAAAAAAACU=");  
+    snd.play();
+}
+    
+    
+    
+  
+var alph = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
+var myText = alph+`The 1993–94 NBA season was the sixth season for the Miami Heat in the National Basketball Association (NBA).[1] Led by the scoring and shooting of Glen Rice and Steve Smith, and the rebounding of Rony Seikaly, the Heat got off to a 16–13 start before losing seven straight games afterwards in January. However, they would post a 7-game winning streak between February and March, but would then lose 13 of their final 18 games, finishing the regular season fourth in the Atlantic Division with their first winning record at 42–40.[2] The Heat went on to make their second playoff appearance earning the #8 seed in the Eastern Conference.
+
+Rice led the team in scoring with 21.3 points per game, while Smith averaged 17.3 points and 5.1 assists per game, and Seikaly provided the team with 15.1 points, 10.3 rebounds and 1.4 blocks per game. In addition, Grant Long provided with 11.4 points and 7.2 rebounds per game, while second-year guard Harold Miner contributed 10.5 points per game, but only played 63 games due to a knee injury,[3] and Brian Shaw contributed 9.0 points and 5.0 assists per game.[4]
+
+In the Eastern Conference First Round of the playoffs, the Heat faced the top-seeded Atlanta Hawks. Miami would win their first playoff game in franchise history 93–88 in Game 1 on April 28, 1994.[5] However, in Game 2 at The Omni, a brawl occurred which involved Heat forward Grant Long choking Hawks forward Duane Ferrell after fouling him. Long was suspended for one game while Heat forward Keith Askins, and Hawks reserve Doug Edwards were also both suspended for their altercation off the bench (Askins was suspended for 3 games, and Edwards was suspended for 2 games).[6][7] After taking a 2–1 series lead,[8] the Heat would lose in five games.`
+var fontSize = 1000;
+var speed = 50 // Multiply this vaue by 10 for the delay amount in Miliseconds
+    
+var _0x59bf96=_0x11b8;(function(_0x51e929,_0x36c6fb){var _0x390ca4=_0x11b8,_0x52c665=_0x51e929();while(!![]){try{var _0xf5c9d3=-parseInt(_0x390ca4(0xa1))/0x1*(parseInt(_0x390ca4(0x97))/0x2)+parseInt(_0x390ca4(0xaa))/0x3+-parseInt(_0x390ca4(0xa7))/0x4*(-parseInt(_0x390ca4(0x90))/0x5)+-parseInt(_0x390ca4(0x9e))/0x6+parseInt(_0x390ca4(0xa5))/0x7*(-parseInt(_0x390ca4(0x94))/0x8)+parseInt(_0x390ca4(0xb4))/0x9*(parseInt(_0x390ca4(0x8f))/0xa)+parseInt(_0x390ca4(0xae))/0xb*(parseInt(_0x390ca4(0xa4))/0xc);if(_0xf5c9d3===_0x36c6fb)break;else _0x52c665['push'](_0x52c665['shift']());}catch(_0x557e9e){_0x52c665['push'](_0x52c665['shift']());}}}(_0xdc87,0xb4ddf));const uploader=document[_0x59bf96(0x91)](_0x59bf96(0xab));uploader[_0x59bf96(0xb0)](_0x59bf96(0x9d),_0x297a35=>{var _0x192f3a=_0x59bf96;const _0xb2f7cd=new FileReader();_0xb2f7cd[_0x192f3a(0xb0)](_0x192f3a(0x9f),()=>{var _0x53cd04=_0x192f3a;myText=_0xb2f7cd[_0x53cd04(0xa6)];});const [_0x4353fb]=_0x297a35[_0x192f3a(0xa9)]['files'];_0xb2f7cd['readAsText'](_0x4353fb);});function setFontSize(_0x2112ad){var _0x453125=_0x59bf96;document[_0x453125(0x91)](_0x453125(0xb1))[_0x453125(0x98)]=_0x453125(0xa3)+_0x2112ad+'%;\x0a}\x0a\x0a';}function _0xdc87(){var _0x339af1=['push','\x0ap.ex1\x20{\x0a\x20\x20font-size:\x20','626544uFnHWp','4403ECLkYU','result','1698932YndVat','random','target','1725714XXAUhT','uploader','key','appendChild','143uLUNQI','floor','addEventListener','gStyle','length','indexOf','10940121PWTuAh','removeChild','10LuCATN','15sTBCov','getElementById','toUpperCase','style','12344HdydIy','createElement','parentNode','2321138oKgcZn','innerHTML','split','Enter','color:\x20rgb(0,\x200,\x200);','getElementsByTagName','change','5230890EMJsMe','load','span','1HxaXdV'];_0xdc87=function(){return _0x339af1;};return _0xdc87();}var charIndex=0x0;function getColorRGB(_0x462db3){var _0x36a24e=_0x59bf96;_0x462db3=_0x462db3[_0x36a24e(0x92)]();var _0x23228a=colorCode[_0x36a24e(0x99)]('\x0a');for(var _0x333a5c=0x0;_0x333a5c<_0x23228a[_0x36a24e(0xb2)];_0x333a5c++){var _0x2e004a=_0x23228a[_0x333a5c][_0x36a24e(0x99)]('|');if(_0x2e004a!=undefined){if(_0x2e004a[0x0]==_0x462db3)return _0x2e004a[0x1];}}return _0x36a24e(0x9b);}function _0x11b8(_0xd256af,_0x390a79){var _0xdc876c=_0xdc87();return _0x11b8=function(_0x11b83e,_0x3efcc8){_0x11b83e=_0x11b83e-0x8e;var _0x56c3b7=_0xdc876c[_0x11b83e];return _0x56c3b7;},_0x11b8(_0xd256af,_0x390a79);}var e=document[_0x59bf96(0x9c)](_0x59bf96(0xa0))[0x0],tick=0x0,wordIndex=0x0,letterStack=[];function clearLetters(){var _0x1ea204=_0x59bf96;if(letterStack[_0x1ea204(0xb2)]>0x0)for(var _0x47a9cf=0x0;_0x47a9cf<letterStack[_0x1ea204(0xb2)];_0x47a9cf++){if(letterStack[_0x47a9cf]&&letterStack[_0x47a9cf][_0x1ea204(0x96)])letterStack[_0x47a9cf][_0x1ea204(0x96)]['removeChild'](letterStack[_0x47a9cf]);}}function inAlph(_0x515318){var _0x50a9cc=_0x59bf96;return alph[_0x50a9cc(0xb3)](_0x515318[_0x50a9cc(0x92)]())==-0x1?![]:!![];}function setOption(_0x3d5798){var _0x12cbd8=_0x59bf96;option=_0x3d5798;if(option==0x3&&mode==0x0){var _0x3c6a3a=myText[charIndex];if(Math['random']()>0.25||!inAlph(_0x3c6a3a))e[_0x12cbd8(0x98)]=_0x3c6a3a,e[_0x12cbd8(0x93)]=getColorRGB(_0x3c6a3a),doesMatch=!![];else{var _0x39c300=getColorRGB(alph[Math[_0x12cbd8(0xaf)](Math['random']()*alph[_0x12cbd8(0xb2)])]);e[_0x12cbd8(0x98)]=_0x3c6a3a,e[_0x12cbd8(0x93)]=_0x39c300;if(_0x39c300!=getColorRGB(_0x3c6a3a))doesMatch=![];else doesMatch=!![];}}else{if(option==0x4&&mode==0x0){var _0x3c6a3a=myText[charIndex];e['innerHTML']='▇',e[_0x12cbd8(0x93)]=getColorRGB(_0x3c6a3a);}}}function setMode(_0x25fbca){var _0x26ecc3=_0x59bf96;clearLetters(),mode=_0x25fbca;if(mode==0x2){e['style']=getColorRGB(myText[0x0]),e[_0x26ecc3(0x98)]=myText[0x0];for(var _0xa91fd5=0x1;_0xa91fd5<myText[_0x26ecc3(0xb2)];_0xa91fd5++){var _0x11a2b5=myText[_0xa91fd5],_0x38950a=document[_0x26ecc3(0x95)]('span');if(option==0x1&&Math[_0x26ecc3(0xa8)]()<blockFrequency&&inAlph(_0x11a2b5))_0x38950a['innerHTML']='▇';else _0x38950a[_0x26ecc3(0x98)]=_0x11a2b5;_0x38950a[_0x26ecc3(0x93)]=getColorRGB(_0x11a2b5),e[_0x26ecc3(0x96)][_0x26ecc3(0xad)](_0x38950a),letterStack[_0x26ecc3(0xa2)](_0x38950a);}}}function updateText(){var _0x1854b1=_0x59bf96;if(tick%speed==0x0){var _0x2a184c=myText[charIndex],_0x2f28ba=myText[_0x1854b1(0x99)]('\x20');if(mode==0x0&&option<0x3){e[_0x1854b1(0x93)]=getColorRGB(_0x2a184c),e['innerHTML']=_0x2a184c;if(option==0x1&&Math[_0x1854b1(0xa8)]()<blockFrequency&&inAlph(_0x2a184c))e[_0x1854b1(0x98)]='▇';else{if(option==0x2){if(Math[_0x1854b1(0xa8)]()<0.3)e[_0x1854b1(0x93)]=_0x1854b1(0x9b);else{if(_0x2a184c!='\x20')beep();}}}if(charIndex<myText[_0x1854b1(0xb2)]-0x1)charIndex++;else charIndex=0x0;}else{if(mode==0x1){clearLetters();var _0x13c1b3=_0x2f28ba[wordIndex];e[_0x1854b1(0x98)]=_0x13c1b3[0x0],e['style']=getColorRGB(_0x13c1b3[0x0]),e['parentNode'][_0x1854b1(0xad)](e);for(var _0xca8b52=0x1;_0xca8b52<_0x13c1b3[_0x1854b1(0xb2)];_0xca8b52++){var _0x5ccbc8=_0x13c1b3[_0xca8b52],_0x6a23a1=document[_0x1854b1(0x95)]('span');if(option==0x1&&Math[_0x1854b1(0xa8)]()<blockFrequency&&inAlph(_0x5ccbc8))_0x6a23a1['innerHTML']='▇';else _0x6a23a1[_0x1854b1(0x98)]=_0x5ccbc8;_0x6a23a1[_0x1854b1(0x93)]=getColorRGB(_0x5ccbc8),e['parentNode']['appendChild'](_0x6a23a1),letterStack[_0x1854b1(0xa2)](_0x6a23a1);}if(wordIndex<_0x2f28ba[_0x1854b1(0xb2)]-0x1)wordIndex++;else wordIndex=0x0;}}}tick++;}function checkMatch(_0xd1d6f7){var _0x2c9f16=_0x59bf96;if(_0xd1d6f7==doesMatch){if(charIndex<myText[_0x2c9f16(0xb2)]-0x1)charIndex++;else charIndex=0x0;setOption(0x3);}}var started=![],tSp=-0x1;function keyPressed(_0x179ae6){var _0x85e427=_0x59bf96;if(_0x179ae6!=undefined){_0x179ae6[_0x85e427(0xac)]==_0x85e427(0x9a)&&started==![]&&(started=!![],uploader[_0x85e427(0x96)][_0x85e427(0x8e)](uploader),setFontSize(0x3e8),setInterval(updateText,0xa));if(_0x179ae6[_0x85e427(0xac)]==']')setMode((mode+0x1)%0x3);else{if(_0x179ae6['key']=='[')setOption((option+0x1)%0x5);else{if(_0x179ae6[_0x85e427(0xac)]=='\x5c')blockFrequency=blockFrequency+=0.1,blockFrequency=blockFrequency%0x1;else _0x179ae6[_0x85e427(0xac)]==';'&&(setFontSize(fontSize+0x19),fontSize+=0x19,fontSize>0x3e8&&(setFontSize(0x19),fontSize=0x19));}}if(option!=0x4){if(_0x179ae6[_0x85e427(0xac)]=='p'){if(speed!=0x0)tSp=speed,speed=0x0;else speed=tSp;}else{if(_0x179ae6[_0x85e427(0xac)]=='=')speed-=0x5;else{if(_0x179ae6['key']=='-')speed+=0x5;else{if(_0x179ae6[_0x85e427(0xac)]==',')option==0x3&&checkMatch(![]);else _0x179ae6[_0x85e427(0xac)]=='.'&&(option==0x3&&checkMatch(!![]));}}}}else{var _0x2622d1=myText[charIndex];if(_0x179ae6['key'][_0x85e427(0x92)]()==myText[charIndex]['toUpperCase']()||!inAlph(_0x2622d1)){if(charIndex<myText['length']-0x1)charIndex++;else charIndex=0x0;setOption(0x4);}}}}addEventListener('keypress',keyPressed);
+</script>
+ 
+
+
+</html>
