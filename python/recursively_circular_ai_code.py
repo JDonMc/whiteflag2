@@ -79,17 +79,17 @@ class CircularNeuralNetwork:
         return cumulative_errors
 
 
-class MultiplicativeNeuralNetwork:
+class CircularStraightNeuralNetwork:
     def __init__(self, learning_rate):
         self.weights = np.array([np.random.randn(), np.random.randn()])
         self.bias = np.random.randn()
         self.learning_rate = learning_rate
-
+  
     def _sigmoid(self, x):
-        return 1 / (1 + np.exp(-x))
+        return (1 / (1 + np.exp(-x))+1 / (math.sqrt(1+np.exp(-x)**2)))/2
 
     def _sigmoid_deriv(self, x):
-        return np.exp((self._sigmoid(x) * (1 - self._sigmoid(x)))/(1 / (1 + np.exp(-x))))
+        return (np.exp((self._sigmoid(x) * (1 - self._sigmoid(x)))/(1 / (1 + np.exp(-x))))+math.sqrt(1+(self._sigmoid(x) * (1 - self._sigmoid(x)))**2)-math.sqrt(1))/2
         #return self._sigmoid(x) * (1 - self._sigmoid(x))
 
 
@@ -248,20 +248,32 @@ plt.xlabel("Circular Iterations")
 plt.ylabel("Error for all training instances")
 plt.savefig("circular_cumulative_error.png")
 
-neural_network = NeuralNetwork(learning_rate)
+from datasets import load_dataset, load_metric
+from transformers import DistilBertTokenizerFast
+from transformers import AutoModelForSequenceClassification, DataCollatorWithPadding
+from transformers import Trainer, TrainingArguments
 
-training_error = neural_network.train(input_vectors, targets, 100000)
+checkpoint = "distilbert-base-uncased"
 
-plt.plot(training_error)
-plt.xlabel("Circular Iterations")
-plt.ylabel("Error for all training instances")
-plt.savefig("cumulative_error.png")
+dataset = load_dataset("boolq")
+DatasetDict({train: Dataset({features: ['question', 'answer', 'passage'], num_rows: 9427}), validation: Dataset({features: ['question', 'answer', 'passage'], num_rows: 3270 })})
+tokenizer = DistilBertTokenizerFast.from_pretrained(checkpoint)
 
-neural_network = MultiplicativeNeuralNetwork(learning_rate)
+def tokenize_function(example):
+    encoded = tokenizer(example["question"], example["passage"], truncation=True)
+    encoded["labels"] = [int(a) for a in example["answer"]]
+    return encoded
 
-training_error = neural_network.train(input_vectors, targets, 100000)
+tokenized_datasets = dataset.map(tokenize_function, batched=True)
+data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
+model = AutoModelForSequenceClassification.from_pretrained(checkpoint, num_labels=2)
+args = TrainingArguments("roberta-booql", per_device_train_batch_size=16, learning_rate=1e-3, num_train_epochs=3)
+trainer = Trainer(model, args, train_dataset=tokenized_datasets["train"], eval_dataset=tokenized_datasets["validation"], data_collator=data_collator, tokenizer=tokenizer,)
+trainer.train()
 
-plt.plot(training_error)
-plt.xlabel("Circular Iterations")
-plt.ylabel("Error for all training instances")
-plt.savefig("multiplicative_cumulative_error.png")
+predictions = trainer.predict(tokenized_datasets["validation"])
+y_pred = predictions.predictions.argmax(-1)
+labels = predictions.label_ids
+metric = load_metric("accuracy")
+metric.compute(predictions=y_pred, references=predictions.label_ids)
+
