@@ -252,6 +252,7 @@ from datasets import load_dataset, load_metric
 from transformers import DistilBertTokenizerFast
 from transformers import AutoModelForSequenceClassification, DataCollatorWithPadding
 from transformers import Trainer, TrainingArguments
+from transformers import BertTokenizer
 
 checkpoint = "distilbert-base-uncased"
 
@@ -271,9 +272,18 @@ args = TrainingArguments("roberta-booql", per_device_train_batch_size=16, learni
 trainer = Trainer(model, args, train_dataset=tokenized_datasets["train"], eval_dataset=tokenized_datasets["validation"], data_collator=data_collator, tokenizer=tokenizer,)
 trainer.train()
 
+filename = f'save_models'
+trainer.save_model(filename)
 predictions = trainer.predict(tokenized_datasets["validation"])
 y_pred = predictions.predictions.argmax(-1)
 labels = predictions.label_ids
 metric = load_metric("accuracy")
 metric.compute(predictions=y_pred, references=predictions.label_ids)
+
+
+new_tokenizer = BertTokenizer.from_pretrained("/usr/adenhandasyde/GitHub/whiteflag/python/save_models/")
+from transformers import TFAutoModel
+# bert = TFAutoModel.from_pretrained("bert-base-uncased")
+bert = TFAutoModel.from_pretrained("/usr/adenhandasyde/GitHub/whiteflag/python/save_models/")
+
 
