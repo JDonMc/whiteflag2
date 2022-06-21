@@ -274,16 +274,18 @@ trainer.train()
 
 filename = f'save_models'
 trainer.save_model(filename)
+print(trainer)
 predictions = trainer.predict(tokenized_datasets["validation"])
 y_pred = predictions.predictions.argmax(-1)
 labels = predictions.label_ids
 metric = load_metric("accuracy")
 metric.compute(predictions=y_pred, references=predictions.label_ids)
-
+print(metric)
 
 new_tokenizer = BertTokenizer.from_pretrained("/usr/adenhandasyde/GitHub/whiteflag/python/save_models/")
 from transformers import TFAutoModel
 # bert = TFAutoModel.from_pretrained("bert-base-uncased")
 bert = TFAutoModel.from_pretrained("/usr/adenhandasyde/GitHub/whiteflag/python/save_models/")
-
+print(bert)
+print(new_tokenizer)
 
